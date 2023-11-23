@@ -8,12 +8,21 @@ import { useNavigate } from "react-router-dom";
 import { useInvoiceListData } from "../redux/hooks";
 import { useDispatch } from "react-redux";
 import { deleteInvoice } from "../redux/invoicesSlice";
+import { bulkInvoiceEdit } from "../redux/invoicesSlice";
 
 const InvoiceList = () => {
   const { invoiceList, getOneInvoice } = useInvoiceListData();
   const isListEmpty = invoiceList.length === 0;
   const [copyId, setCopyId] = useState("");
+  const [bulkEdit, setBulkEdit] = useState(true);
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [billTo, setBillTo] = useState("");
+  const [total, setTotal] = useState("");
+  const [dateOfIssue, setdateOfIssue] = useState("");
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
   const handleCopyClick = () => {
     const invoice = getOneInvoice(copyId);
     if (!invoice) {
@@ -22,6 +31,18 @@ const InvoiceList = () => {
       navigate(`/create/${copyId}`);
     }
   };
+
+  function handleBulkEdit() {
+    const updatedInvoices = invoiceList.map((invoice) => ({
+      ...invoice,
+      billTo: billTo[invoice.id] || invoice.billTo,
+      dateOfIssue: dateOfIssue[invoice.id] || invoice.dateOfIssue,
+      total: total[invoice.id] || invoice.total,
+    }));
+
+    dispatch(bulkInvoiceEdit(updatedInvoices));
+    setBulkEdit((bulkEdit) => !bulkEdit);
+  }
 
   return (
     <Row>
@@ -44,7 +65,7 @@ const InvoiceList = () => {
                 </Link>
 
                 <div className="d-flex gap-2">
-                  <Button variant="dark mb-2 mb-md-4" onClick={handleCopyClick}>
+                  {/* <Button variant="dark mb-2 mb-md-4" onClick={handleCopyClick}>
                     Copy Invoice
                   </Button>
 
@@ -57,7 +78,12 @@ const InvoiceList = () => {
                     style={{
                       height: "50px",
                     }}
-                  />
+                  /> */}
+                  <Button variant="dark mb-2 mb-md-4" onClick={handleBulkEdit}>
+                    {bulkEdit
+                      ? "Click Here To Edit The Invoices In Bulk"
+                      : "Clicked Here To Update The Invoice"}
+                  </Button>
                 </div>
               </div>
               <Table responsive>
@@ -76,6 +102,13 @@ const InvoiceList = () => {
                       key={invoice.id}
                       invoice={invoice}
                       navigate={navigate}
+                      onHandleBulkEdit={bulkEdit}
+                      billTo={billTo}
+                      setBillTo={setBillTo}
+                      dateOfIssue={dateOfIssue}
+                      setdateOfIssue={setdateOfIssue}
+                      total={total}
+                      setTotal={setTotal}
                     />
                   ))}
                 </tbody>
@@ -88,9 +121,19 @@ const InvoiceList = () => {
   );
 };
 
-const InvoiceRow = ({ invoice, navigate }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const InvoiceRow = ({
+  invoice,
+  navigate,
+  onHandleBulkEdit,
+  billTo,
+  setBillTo,
+  dateOfIssue,
+  setdateOfIssue,
+  total,
+  setTotal,
+}) => {
   const dispatch = useDispatch();
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleDeleteClick = (invoiceId) => {
     dispatch(deleteInvoice(invoiceId));
@@ -105,19 +148,75 @@ const InvoiceRow = ({ invoice, navigate }) => {
     setIsOpen(true);
   };
 
+  // console.log(billTo[invoice.id].length);
+
   const closeModal = () => {
     setIsOpen(false);
   };
 
   return (
     <tr>
-      <td>{invoice.invoiceNumber}</td>
-      <td className="fw-normal">{invoice.billTo}</td>
-      <td className="fw-normal">{invoice.dateOfIssue}</td>
-      <td className="fw-normal">
-        {invoice.currency}
-        {invoice.total}
-      </td>
+      <>
+        <td>{invoice.invoiceNumber}</td>
+        <td className="fw-normal">
+          {onHandleBulkEdit ? (
+            invoice.billTo
+          ) : (
+            <input
+              value={
+                billTo[invoice.id] !== undefined
+                  ? billTo[invoice.id]
+                  : invoice.billTo
+              }
+              type="text"
+              onChange={(e) =>
+                setBillTo({
+                  [invoice.id]: e.target.value,
+                })
+              }
+            ></input>
+          )}
+        </td>
+        <td className="fw-normal">
+          {onHandleBulkEdit ? (
+            invoice.dateOfIssue
+          ) : (
+            <input
+              value={
+                dateOfIssue[invoice.id] !== undefined
+                  ? dateOfIssue[invoice.id]
+                  : invoice.dateOfIssue
+              }
+              type="text"
+              onChange={(e) =>
+                setdateOfIssue({
+                  ...dateOfIssue,
+                  [invoice.id]: e.target.value,
+                })
+              }
+            ></input>
+          )}
+        </td>
+        <td className="fw-normal">
+          {invoice.currency}
+          {onHandleBulkEdit ? (
+            invoice.total
+          ) : (
+            <input
+              value={
+                total[invoice.id] !== undefined
+                  ? total[invoice.id]
+                  : invoice.total
+              }
+              type="number"
+              onChange={(e) =>
+                setTotal({ ...total, [invoice.id]: e.target.value })
+              }
+            ></input>
+          )}
+        </td>
+      </>
+
       <td style={{ width: "5%" }}>
         <Button variant="outline-primary" onClick={handleEditClick}>
           <div className="d-flex align-items-center justify-content-center gap-2">
@@ -149,7 +248,7 @@ const InvoiceRow = ({ invoice, navigate }) => {
           currentDate: invoice.currentDate,
           invoiceNumber: invoice.invoiceNumber,
           dateOfIssue: invoice.dateOfIssue,
-          billTo: invoice.billTo,
+          billTo: billTo,
           billToEmail: invoice.billToEmail,
           billToAddress: invoice.billToAddress,
           billFrom: invoice.billFrom,
