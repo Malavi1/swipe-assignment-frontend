@@ -15,8 +15,6 @@ const InvoiceList = () => {
   const isListEmpty = invoiceList.length === 0;
   const [copyId, setCopyId] = useState("");
   const [bulkEdit, setBulkEdit] = useState(true);
-
-  const [isOpen, setIsOpen] = useState(false);
   const [billTo, setBillTo] = useState("");
   const [total, setTotal] = useState("");
   const [dateOfIssue, setdateOfIssue] = useState("");
@@ -65,7 +63,7 @@ const InvoiceList = () => {
                 </Link>
 
                 <div className="d-flex gap-2">
-                  {/* <Button variant="dark mb-2 mb-md-4" onClick={handleCopyClick}>
+                  <Button variant="dark mb-2 mb-md-4" onClick={handleCopyClick}>
                     Copy Invoice
                   </Button>
 
@@ -78,7 +76,7 @@ const InvoiceList = () => {
                     style={{
                       height: "50px",
                     }}
-                  /> */}
+                  />
                   <Button variant="dark mb-2 mb-md-4" onClick={handleBulkEdit}>
                     {bulkEdit
                       ? "Click Here To Edit The Invoices In Bulk"
